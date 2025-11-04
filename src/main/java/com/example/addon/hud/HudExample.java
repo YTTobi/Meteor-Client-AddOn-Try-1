@@ -25,5 +25,7 @@ public class HudExample extends HudElement {
 
         // Render text
         renderer.text("Example element", x, y, Color.WHITE, true);
+
+
     }
 }

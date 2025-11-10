@@ -44,6 +44,14 @@ public class KelpESP extends Module {
         .build()
     );
 
+    private final Setting<Boolean> darkMode = sgGeneral.add(new BoolSetting.Builder()
+        .name("Dark Mode")
+        .description("Turns on dark mode")
+        .defaultValue(false)
+        .build()
+    );
+
+
     private long lastScan = 0;
     private final Set<BlockPos> notifiedAreas = new HashSet<>();
     private final Set<BlockPos> kelpToRender = new HashSet<>();

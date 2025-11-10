@@ -2,6 +2,7 @@
 
 A template to allow easy usage of the Meteor Addon API.
 
+
 ### How to use
 
 #### Use GitHub Template (Recommended)

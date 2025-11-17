@@ -110,7 +110,7 @@ public class ChunkFinder extends Module {
     );
 
     public ChunkFinder() {
-        super(AddonTemplate.CATEGORY, "Chunk-finder", "Highlights suspicious chunks.");
+    super(AddonTemplate.DONUTSMP, "Chunk-finder", "Highlights suspicious chunks.");
     }
 
     private final Set<BlockPos> suspiciousBlocks = new CopyOnWriteArraySet<>();

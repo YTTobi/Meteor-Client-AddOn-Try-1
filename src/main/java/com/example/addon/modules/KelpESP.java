@@ -57,7 +57,7 @@ public class KelpESP extends Module {
     private final Set<BlockPos> kelpToRender = new HashSet<>();
 
     public KelpESP() {
-        super(AddonTemplate.CATEGORY, "kelp-esp", "Highlights fully grown kelp areas and notifies you. Not very Optimised, very laggy and buggy.");
+        super(AddonTemplate.DONUTSMP, "kelp-esp", "Highlights fully grown kelp areas and notifies you. Not very Optimised, very laggy and buggy.");
     }
 
     @EventHandler

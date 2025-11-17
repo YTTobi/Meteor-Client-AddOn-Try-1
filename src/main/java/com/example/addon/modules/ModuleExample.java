@@ -43,7 +43,7 @@ public class ModuleExample extends Module {
      * The {@code name} parameter should be in kebab-case.
      */
     public ModuleExample() {
-        super(AddonTemplate.CATEGORY, "world-origin", "An example module that highlights the center of the world.");
+        super(AddonTemplate.DONUTSMP, "world-origin", "An example module that highlights the center of the world.");
     }
 
     /**

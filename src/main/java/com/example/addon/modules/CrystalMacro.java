@@ -51,7 +51,7 @@ public class CrystalMacro extends Module {
     );
 
     public CrystalMacro() {
-        super(AddonTemplate.CATEGORY, "Crystal-Macro" , "Juts like Killaura but with crystals");
+        super(AddonTemplate.DONUTSMP, "Crystal-Macro" , "Juts like Killaura but with crystals");
     }
 
     private void onTick(TickEvent.Post event) {

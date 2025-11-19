@@ -1,4 +1,4 @@
-package com.example.addon.modules;
+package com.example.addon.modules.Hypixel;
 
 import com.example.addon.AddonTemplate;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;

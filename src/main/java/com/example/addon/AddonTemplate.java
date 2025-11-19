@@ -2,7 +2,13 @@ package com.example.addon;
 
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
-import com.example.addon.modules.*;
+import com.example.addon.modules.DonutSMP.ChunkFinder;
+import com.example.addon.modules.DonutSMP.CrystalMacro;
+import com.example.addon.modules.DonutSMP.KelpESP;
+import com.example.addon.modules.DonutSMP.ModuleExample;
+import com.example.addon.modules.Hypixel.CoordinatesToChat;
+import com.example.addon.modules.Hypixel.DungeonRooms;
+import com.example.addon.modules.Hypixel.MiningMacro;
 import com.mojang.logging.LogUtils;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
@@ -29,6 +35,8 @@ public class AddonTemplate extends MeteorAddon {
         Modules.get().add(new ChunkFinder());
         Modules.get().add(new CrystalMacro());
         Modules.get().add(new MiningMacro());
+        Modules.get().add(new CoordinatesToChat());
+        Modules.get().add(new DungeonRooms());
 
         // Commands
         Commands.add(new CommandExample());

@@ -28,7 +28,7 @@ public class AddonTemplate extends MeteorAddon {
         Modules.get().add(new KelpESP());
         Modules.get().add(new ChunkFinder());
         Modules.get().add(new CrystalMacro());
-        Modules.get().add(new SmoothAutoMiner());
+        Modules.get().add(new MiningMacro());
 
         // Commands
         Commands.add(new CommandExample());

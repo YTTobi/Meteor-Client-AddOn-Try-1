@@ -1,10 +1,8 @@
 package com.example.addon.modules;
 
 import com.example.addon.AddonTemplate;
-import meteordevelopment.meteorclient.events.render.Render2DEvent;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.renderer.Renderer2D;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
@@ -17,20 +15,16 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import meteordevelopment.meteorclient.utils.render.RenderUtils;
-import meteordevelopment.meteorclient.utils.render.color.Color;
-import meteordevelopment.meteorclient.events.render.Render2DEvent;
 import net.minecraft.util.math.BlockPos;
 
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SmoothAutoMiner extends Module {
+public class MiningMacro extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private final SettingGroup sgRender = settings.createGroup("Render");
     private final SettingGroup sgAim = settings.createGroup("Aim Settings");
-    /*private final SettingGroup sgStats = settings.createGroup("Stats HUD");*/
     private final SettingGroup sgGem = settings.createGroup("Gemstone Actions");
 
 
@@ -46,7 +40,7 @@ public class SmoothAutoMiner extends Module {
     private final Setting<List<Block>> customBlocks = sgGeneral.add(new BlockListSetting.Builder()
         .name("custom-blocks")
         .description("Blocks mined when in CUSTOM mode.")
-        .defaultValue(new Block[]{Blocks.STONE})
+        .defaultValue(new Block[]{Blocks.BEDROCK})
         .visible(() -> mode.get() == Mode.CUSTOM)
         .build());
 
@@ -122,12 +116,6 @@ public class SmoothAutoMiner extends Module {
         .defaultValue(false)
         .build());
 
-    /*private final Setting<Boolean> showStats = sgRender.add(new BoolSetting.Builder()
-        .name("show-stats")
-        .description("Shows how many blocks you've mined this session.")
-        .defaultValue(true)
-        .build());*/
-
     private final Setting<Double> aimJitter = sgAim.add(new DoubleSetting.Builder()
         .name("aim-jitter")
         .description("How much random offset is applied to the aim point.")
@@ -145,44 +133,6 @@ public class SmoothAutoMiner extends Module {
         .sliderRange(0.5, 10.0)
         .build()
     );
-
-    /*private final Setting<Integer> statsX = sgStats.add(new IntSetting.Builder()
-        .name("stats-x")
-        .description("X position of the stats HUD.")
-        .defaultValue(10)
-        .range(0, 2000)
-        .sliderRange(0, 500)
-        .build());
-
-    private final Setting<Integer> statsY = sgStats.add(new IntSetting.Builder()
-        .name("stats-y")
-        .description("Y position of the stats HUD.")
-        .defaultValue(10)
-        .range(0, 2000)
-        .sliderRange(0, 500)
-        .build());
-
-    private final Setting<Integer> statsWidth = sgStats.add(new IntSetting.Builder()
-        .name("stats-width")
-        .description("Width of the stats HUD.")
-        .defaultValue(120)
-        .range(50, 400)
-        .sliderRange(50, 250)
-        .build());
-
-    private final Setting<Integer> statsHeight = sgStats.add(new IntSetting.Builder()
-        .name("stats-height")
-        .description("Height of the stats HUD.")
-        .defaultValue(30)
-        .range(12, 300)
-        .sliderRange(12, 150)
-        .build());
-
-    private final Setting<SettingColor> statsBgColor = sgStats.add(new ColorSetting.Builder()
-        .name("stats-background")
-        .description("Background color of the stats box.")
-        .defaultValue(new SettingColor(0, 0, 0, 160)) // black box with transparency
-        .build());*/
 
     private final Setting<Integer> drillSlot = sgGeneral.add(new IntSetting.Builder()
         .name("drill-slot")
@@ -241,11 +191,9 @@ public class SmoothAutoMiner extends Module {
     private int gemActionTicks = 0;  // countdown for teleport action
     private boolean doingTeleport = false;
     private int teleportTicks = 0;
+    private int tpStage = 0;
 
-
-
-
-
+    private TeleportPoint tpTarget = null;
     private float targetYaw, targetPitch;
     private final FloatRef yawVel = new FloatRef(0);
     private final FloatRef pitchVel = new FloatRef(0);
@@ -255,6 +203,11 @@ public class SmoothAutoMiner extends Module {
     private int sameTicks, retryCount;
     private long lookStartTime;
     private BlockPos lastBroken;
+    private int ignoreMiningTicks = 0;
+    private int lastTeleportDelay = 0;
+
+
+
 
     // --- Stats ---
     private int brokenBlocks = 0;
@@ -262,7 +215,7 @@ public class SmoothAutoMiner extends Module {
     private static final int SPREAD_RADIUS = 2; // how far spread mining can affect
 
 
-    public SmoothAutoMiner() {
+    public MiningMacro() {
         super(AddonTemplate.HYPIXEL, "Smooth Auto Miner",
             "Smoothly mines visible blocks with smart retargeting and render options.");
     }
@@ -313,7 +266,8 @@ public class SmoothAutoMiner extends Module {
                 Blocks.GREEN_STAINED_GLASS, Blocks.GREEN_STAINED_GLASS_PANE, Blocks.RED_STAINED_GLASS, Blocks.RED_STAINED_GLASS_PANE,
                 Blocks.ORANGE_STAINED_GLASS, Blocks.ORANGE_STAINED_GLASS_PANE, Blocks.BLACK_STAINED_GLASS, Blocks.BLACK_STAINED_GLASS_PANE,
                 Blocks.CYAN_STAINED_GLASS, Blocks.CYAN_STAINED_GLASS_PANE, Blocks.PURPLE_STAINED_GLASS, Blocks.PURPLE_STAINED_GLASS_PANE,
-                Blocks.MAGENTA_STAINED_GLASS, Blocks.MAGENTA_STAINED_GLASS_PANE, Blocks.LIME_STAINED_GLASS, Blocks.LIME_STAINED_GLASS_PANE
+                Blocks.MAGENTA_STAINED_GLASS, Blocks.MAGENTA_STAINED_GLASS_PANE, Blocks.LIME_STAINED_GLASS, Blocks.LIME_STAINED_GLASS_PANE,
+                Blocks.LIGHT_BLUE_STAINED_GLASS, Blocks.LIGHT_BLUE_STAINED_GLASS_PANE
             ));
         } else {
             targetList.addAll(customBlocks.get());
@@ -324,66 +278,47 @@ public class SmoothAutoMiner extends Module {
     private void onTick(TickEvent.Post e) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         ClientPlayerEntity p = mc.player;
-        loadPreset();
 
-        // Sneak only when mining (autoSneak option)
+        // ==========================================================
+        //   POST TELEPORT WAIT → PREVENT MINING WRONG BLOCKS
+        // ==========================================================
+        // ======== COOLDOWN after teleport ========
+        if (ignoreMiningTicks > 0) {
+            ignoreMiningTicks--;
+        }
+
+        // ======== FIRST: If teleport is running, handle it and STOP ========
+        if (doingTeleport) {
+            handleTeleport(p);
+            return;        // absolutely NO mining during ANY teleport stage
+        }
+
+        loadPreset();
+        // ==========================================================
+        //   AUTO-SNEAK DURING MINING
+        // ==========================================================
         mc.options.sneakKey.setPressed(autoSneak.get());
 
-        // === Handle GEMSTONE ACTION SEQUENCE (if active) ===
-        if (gemActionTicks > 0) {
-            gemActionTicks--;
-
-            // Release click when done
-            if (gemActionTicks == 0) {
-                mc.options.attackKey.setPressed(false);
-
-                // Switch back to drill slot safely
-                p.getInventory().setSelectedSlot(drillSlot.get() - 1);
-
-                // Sneak back ON if mining mode requires it
-                mc.options.sneakKey.setPressed(autoSneak.get());
-            }
-
-            // Skip mining logic while doing gemstone macro
-            return;
-        }
-
-        if (doingTeleport) {
-
-            teleportTicks--;
-
-            if (teleportTicks <= 0) {
-                doingTeleport = false;
-                mc.options.attackKey.setPressed(false);
-
-                // back to drill slot
-                mc.player.getInventory().setSelectedSlot(drillSlot.get() - 1);
-
-                // restore sneaking for mining
-                mc.options.sneakKey.setPressed(autoSneak.get());
-            }
-
-            return; // ⭐ DO NOT RUN ANY MINING LOGIC
-        }
-
-        // ================================================
-        //   TARGET BLOCK CHECK
-        // ================================================
+        // ==========================================================
+        //   VALIDATE TARGET OR FIND NEW ONE
+        // ==========================================================
         if (target == null || !shouldMine(mc.world.getBlockState(target))) {
 
-            // Try to find new gemstone block
+            // Find new mining target
             target = findNearest(lastBroken != null ? lastBroken : p.getBlockPos(), range.get());
 
-            // === SPECIAL GEMSTONE MODE LOGIC ===
-            if (mode.get() == Mode.GEMSTONE && doGemAction.get() && target == null && !ranGemAction) {
+            // 🟩 If no target exists → TELEPORT
+            if (target == null
+                && mode.get() == Mode.GEMSTONE
+                && teleportPointsExist()
+                && ignoreMiningTicks <= 0) {
 
-                // No blocks → run gemstone teleport/action macro
-                runGemstoneAction(p);
-                ranGemAction = true;
+                TeleportPoint next = getNextTeleportPoint();
+                startTeleportAction(next);
                 return;
             }
 
-            // Reset normal mining stuff
+            // Reset mining state
             breaking = false;
             sameTicks = 0;
             lookStartTime = 0;
@@ -392,26 +327,38 @@ public class SmoothAutoMiner extends Module {
 
         BlockState state = mc.world.getBlockState(target);
 
-        // ================================================
-        //   BLOCK FINISHED → COUNT + RETARGET
-        // ================================================
+        // ==========================================================
+        //  BLOCK FINISHED → COUNT + RETARGET
+        // ==========================================================
         if (state.isAir() || state.isOf(Blocks.BEDROCK)) {
-
-            brokenBlocks++;     // Count main break
-            detectSpreadBreaks(target); // Count spread breaks
+            brokenBlocks++;
+            detectSpreadBreaks(target);
 
             lastBroken = target;
 
             // Find next block
             target = findNearest(lastBroken, range.get());
+
+            // 🟩 No more gemstones → TELEPORT
+            // No gemstone found -> teleport
+            if (target == null
+                && mode.get() == Mode.GEMSTONE
+                && teleportPointsExist()
+                && ignoreMiningTicks <= 0) {
+
+                TeleportPoint next = getNextTeleportPoint();
+                startTeleportAction(next);
+                return;
+            }
+
             breaking = false;
             releaseAttack();
             return;
         }
 
-        // ================================================
-        //   AIMING CALCULATIONS
-        // ================================================
+        // ==========================================================
+        //              AIMING TOWARD TARGET BLOCK
+        // ==========================================================
         Vec3d eye = p.getEyePos();
         double j = aimJitter.get();
 
@@ -430,7 +377,9 @@ public class SmoothAutoMiner extends Module {
 
         boolean lookingAtBlock = yawDiff < 5f && pitchDiff < 5f;
 
-        // Reaction delay logic
+        // ==========================================================
+        //         REACTION DELAY BEFORE STARTING MINING
+        // ==========================================================
         if (!breaking) {
             if ((isLookingCloseEnough(aim) || lookingAtBlock) && dist <= 5.5 && shouldMine(state)) {
                 if (lookStartTime == 0) lookStartTime = System.currentTimeMillis();
@@ -438,9 +387,9 @@ public class SmoothAutoMiner extends Module {
             } else lookStartTime = 0;
         }
 
-        // ================================================
-        //   ACTUAL MINING LOGIC
-        // ================================================
+        // ==========================================================
+        //                   ACTUAL MINING LOGIC
+        // ==========================================================
         if ((isLookingCloseEnough(aim) || breaking) && dist <= 5.5 && shouldMine(state)) {
 
             breakSide = visibleSide(p, target);
@@ -448,14 +397,14 @@ public class SmoothAutoMiner extends Module {
             if (!breaking) {
                 mc.interactionManager.attackBlock(target, breakSide);
                 p.swingHand(Hand.MAIN_HAND);
+
                 breaking = true;
                 lastState = state;
                 sameTicks = 0;
 
                 mc.options.attackKey.setPressed(true);
-
-            } else {
-
+            }
+            else {
                 mc.interactionManager.updateBlockBreakingProgress(target, breakSide);
                 p.swingHand(Hand.MAIN_HAND);
                 mc.options.attackKey.setPressed(true);
@@ -472,15 +421,14 @@ public class SmoothAutoMiner extends Module {
                 }
             }
         }
-
         else {
             releaseAttack();
             breaking = false;
         }
 
-        // ================================================
-        //    IF NEW BLOCK IS AIR → RETARGET
-        // ================================================
+        // ==========================================================
+        //   RETARGET IF BLOCK TURNS TO AIR
+        // ==========================================================
         if (mc.world.getBlockState(target).isAir()) {
             releaseAttack();
             lastBroken = target;
@@ -489,6 +437,18 @@ public class SmoothAutoMiner extends Module {
             lookStartTime = 0;
         }
     }
+
+
+    private boolean teleportPointsExist() {
+        return !getParsedTeleportPoints().isEmpty();
+    }
+
+    private TeleportPoint getNextTeleportPoint() {
+        List<TeleportPoint> list = getParsedTeleportPoints();
+        currentTeleportIndex %= list.size();
+        return list.get(currentTeleportIndex++);
+    }
+
 
 
     // ---------------- Render ----------------
@@ -541,6 +501,115 @@ public class SmoothAutoMiner extends Module {
         }
     }
 
+    private void handleTeleport(ClientPlayerEntity p) {
+        if (tpTarget == null) {
+            doingTeleport = false;
+            return;
+        }
+
+        Vec3d eye = p.getEyePos();
+
+        // Target block center
+        Vec3d center = new Vec3d(
+            tpTarget.pos.getX() + 0.5,
+            tpTarget.pos.getY() + 0.5,
+            tpTarget.pos.getZ() + 0.5
+        );
+
+        // Calculate desired yaw and pitch
+        float desiredYaw = calcYaw(eye, center);
+        float desiredPitch = calcPitch(eye, center);
+
+        // Tell render() what to rotate toward
+        targetYaw = desiredYaw;
+        targetPitch = desiredPitch;
+
+        // How close the camera is to target rotation
+        float yawDiff = Math.abs(normalizeAngle(p.getYaw() - desiredYaw));
+        float pitchDiff = Math.abs(p.getPitch() - desiredPitch);
+        boolean aligned = yawDiff < 2 && pitchDiff < 2;
+
+        // =====================================================
+        //                      STAGE 0
+        //         Smooth turning (handled in onRender)
+        // =====================================================
+        if (tpStage == 0) {
+            // Wait until smooth turn has completed
+            if (aligned) {
+                tpStage = 1;
+                tpTimer = 6;       // Hold sneak for ~300 ms
+            }
+            return;
+        }
+
+        // =====================================================
+        //                      STAGE 1
+        //                Hold sneak before teleport
+        // =====================================================
+        if (tpStage == 1) {
+            mc.options.sneakKey.setPressed(true);
+            tpTimer--;
+
+            if (tpTimer <= 0) {
+                tpStage = 2;
+            }
+            return;
+        }
+
+        // =====================================================
+        //                      STAGE 2
+        //             Switch to teleport item slot
+        // =====================================================
+        if (tpStage == 2) {
+            p.getInventory().setSelectedSlot(teleportSlot.get() - 1);
+            tpStage = 3;
+            tpTimer = 4; // small delay before click
+            return;
+        }
+
+        // =====================================================
+        //                      STAGE 3
+        //               Perform teleport (right click)
+        // =====================================================
+        if (tpStage == 3) {
+            mc.options.useKey.setPressed(true);
+            tpTimer--;
+
+            if (tpTimer <= 0) {
+                mc.options.useKey.setPressed(false);
+                tpStage = 4;
+                tpTimer = 3;
+            }
+            return;
+        }
+
+        // =====================================================
+        //                      STAGE 4
+        //             Switch back to drill after teleport
+        // =====================================================
+        if (tpStage == 4) {
+            p.getInventory().setSelectedSlot(drillSlot.get() - 1);
+            tpStage = 5;
+            return;
+        }
+
+        // =====================================================
+        //                      STAGE 5
+        //                Unsneak & finish teleport
+        // =====================================================
+        if (tpStage == 5) {
+            mc.options.sneakKey.setPressed(false);
+            doingTeleport = false;
+
+            // apply wait before next teleport or mining
+            ignoreMiningTicks = lastTeleportDelay / 50;
+            if (ignoreMiningTicks < 10) ignoreMiningTicks = 10;
+
+            tpTarget = null;
+        }
+    }
+
+
     // ---------------- Helpers ----------------
     private boolean shouldMine(BlockState s) {
         if (s == null) return false;
@@ -566,33 +635,25 @@ public class SmoothAutoMiner extends Module {
             || (result.getBlockPos() != null && result.getBlockPos().equals(pos));
     }
 
-    private void runGemstoneAction(ClientPlayerEntity p) {
-        List<TeleportPoint> points = getParsedTeleportPoints();
-        if (points.isEmpty()) return;
 
-        doingTeleport = true;          // ⭐ freeze normal behavior
-        teleportTicks = 6;             // ⭐ how long teleport action runs (~300ms)
-        mc.options.sneakKey.setPressed(false);
+    private float rotateToward(float current, float target, float speed) {
+        float diff = target - current;
+        while (diff > 180) diff -= 360;
+        while (diff < -180) diff += 360;
 
-        // Pick next point
-        currentTeleportIndex %= points.size();
-        TeleportPoint tp = points.get(currentTeleportIndex++);
-
-        Vec3d eye = p.getEyePos();
-        Vec3d center = Vec3d.of(tp.pos).add(0.5, 0.5, 0.5);
-
-        // Aim
-        p.setYaw(calcYaw(eye, center));
-        p.setPitch(calcPitch(eye, center));
-
-        // Switch to teleport item
-        p.getInventory().setSelectedSlot(teleportSlot.get() - 1);
-
-        // Click once
-        mc.options.attackKey.setPressed(true);
+        float change = Math.max(-speed, Math.min(speed, diff));
+        return current + change;
     }
 
+    private void startTeleportAction(TeleportPoint tp) {
+        doingTeleport = true;
+        tpStage = 0;
+        tpTimer = 0;
+        tpTarget = tp;
 
+        lastTeleportDelay = tp.delay;
+        ignoreMiningTicks = 5;   // prevent instant retrigger
+    }
 
 
     private void applySneakState(boolean mining) {
@@ -750,20 +811,6 @@ public class SmoothAutoMiner extends Module {
         return angle <= aimTolerance.get();
     }
 
-    /*private void sendStatsToChat() {
-        if (mc.player == null) return;
-
-        String msg =
-            "§8====================\n" +
-                "§b§lSmooth Auto Miner Summary§r\n" +
-                "§7Total Blocks: §a" + brokenBlocks + "\n" +
-                "§7Spread Radius: §e" + SPREAD_RADIUS + "\n" +
-                "§7Session Duration: §d" + getSessionDuration() + "\n" +
-                "§8====================";
-
-        mc.player.sendMessage(net.minecraft.text.Text.literal(msg), false);
-    }*/
-
     private String getSessionDuration() {
         long ms = System.currentTimeMillis() - sessionStart;
 
@@ -816,8 +863,6 @@ public class SmoothAutoMiner extends Module {
             return null; // ignore invalid entry
         }
     }
-
-
 
     private void releaseAttack() {
         if (mc.options != null && mc.options.attackKey != null)

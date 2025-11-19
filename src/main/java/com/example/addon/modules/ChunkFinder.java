@@ -1,13 +1,16 @@
-package com.example.addon.modules.DonutSMP;
+package com.example.addon.modules;
 
+import com.sun.jdi.Bootstrap;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.renderer.ShapeMode;

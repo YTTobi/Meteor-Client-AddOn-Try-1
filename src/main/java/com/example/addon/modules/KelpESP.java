@@ -1,6 +1,7 @@
-package com.example.addon.modules.DonutSMP;
+package com.example.addon.modules;
 
 import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.orbit.EventHandler;

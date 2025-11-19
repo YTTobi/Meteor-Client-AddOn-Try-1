@@ -1,4 +1,4 @@
-package com.example.addon.modules.DonutSMP;
+package com.example.addon.modules;
 
 import com.example.addon.AddonTemplate;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;

@@ -1,13 +1,19 @@
-package com.example.addon.modules.DonutSMP;
+package com.example.addon.modules;
 
 import com.example.addon.AddonTemplate;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.settings.*;
+import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import net.minecraft.entity.EntityType;
 
+import javax.swing.text.html.parser.Entity;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+
+import static org.reflections.util.ConfigurationBuilder.build;
 
 public class CrystalMacro extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();

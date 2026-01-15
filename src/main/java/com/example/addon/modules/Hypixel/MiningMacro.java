@@ -26,7 +26,7 @@ public class MiningMacro extends Module {
     private final SettingGroup sgRender = settings.createGroup("Render");
     private final SettingGroup sgAim = settings.createGroup("Aim Settings");
     private final SettingGroup sgGem = settings.createGroup("Gemstone Actions");
-
+    private final SettingGroup sgHud = settings.createGroup("HUD");
 
     // ---------------- Settings ----------------
     private enum Mode { MITHRIL, GEMSTONE, CUSTOM }
@@ -177,6 +177,32 @@ public class MiningMacro extends Module {
         .build());
 
 
+    // HUD settings
+    private final Setting<Boolean> hudEnabled = sgHud.add(
+        new BoolSetting.Builder()
+            .name("enabled")
+            .description("Show mining HUD.")
+            .defaultValue(true)
+            .build()
+    );
+
+    private final Setting<SettingColor> hudOnColor = sgHud.add(
+        new ColorSetting.Builder()
+            .name("on-color")
+            .description("Color when macro is active.")
+            .defaultValue(new Color(0, 255, 0))
+            .build()
+    );
+
+    private final Setting<SettingColor> hudOffColor = sgHud.add(
+        new ColorSetting.Builder()
+            .name("off-color")
+            .description("Color when macro is inactive.")
+            .defaultValue(new Color(255, 0, 0))
+            .build()
+    );
+
+
     // ---------------- Runtime ----------------
     private List<Block> targetList;
     private BlockPos target;
@@ -186,11 +212,8 @@ public class MiningMacro extends Module {
     private boolean ranGemAction = false;
     private int currentTeleportIndex = 0;
     private int tpTimer = 0;
-    private long lastTeleportUsed = 0;
     // Gemstone macro state
-    private int gemActionTicks = 0;  // countdown for teleport action
     private boolean doingTeleport = false;
-    private int teleportTicks = 0;
     private int tpStage = 0;
 
     private TeleportPoint tpTarget = null;
@@ -205,9 +228,7 @@ public class MiningMacro extends Module {
     private BlockPos lastBroken;
     private int ignoreMiningTicks = 0;
     private int lastTeleportDelay = 0;
-
-
-
+    private static MiningMacro INSTANCE;
 
     // --- Stats ---
     private int brokenBlocks = 0;
@@ -218,13 +239,14 @@ public class MiningMacro extends Module {
     public MiningMacro() {
         super(AddonTemplate.HYPIXEL, "Smooth Auto Miner",
             "Smoothly mines visible blocks with smart retargeting and render options.");
+        INSTANCE = this;
     }
 
     // ---------------- Lifecycle ----------------
     @Override
     public void onActivate() {
         if (mc.player == null) return;
-        /*sessionStart = System.currentTimeMillis();*/
+        sessionStart = System.currentTimeMillis();
         ranGemAction = false;
         reset();
         loadPreset();
@@ -237,7 +259,6 @@ public class MiningMacro extends Module {
         reset();
         brokenBlocks = 0;
     }
-
 
     private void reset() {
         target = null;
@@ -811,7 +832,7 @@ public class MiningMacro extends Module {
         return angle <= aimTolerance.get();
     }
 
-    private String getSessionDuration() {
+    public String getSessionDuration() {
         long ms = System.currentTimeMillis() - sessionStart;
 
         long sec = (ms / 1000) % 60;
@@ -873,4 +894,29 @@ public class MiningMacro extends Module {
         float v;
         FloatRef(float v) { this.v = v; }
     }
+
+    public static MiningMacro getInstance() {
+        return INSTANCE;
+    }
+
+    public boolean isHudEnabled() {
+        return hudEnabled.get();
+    }
+
+    public boolean isMacroActive() {
+        return isActive();
+    }
+
+    public Color getHudOnColor() {
+        return hudOnColor.get();
+    }
+
+    public Color getHudOffColor() {
+        return hudOffColor.get();
+    }
+
+    public int getBlocksMined() {
+        return brokenBlocks;
+    }
+
 }

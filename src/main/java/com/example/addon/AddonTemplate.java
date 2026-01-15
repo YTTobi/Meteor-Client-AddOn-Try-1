@@ -1,7 +1,10 @@
 package com.example.addon;
 
 import com.example.addon.commands.CommandExample;
+import com.example.addon.commands.GrottoCommand;
+import com.example.addon.commands.MacroRecordCommand;
 import com.example.addon.hud.HudExample;
+import com.example.addon.hud.MiningHud;
 import com.example.addon.modules.DonutSMP.ChunkFinder;
 import com.example.addon.modules.DonutSMP.CrystalMacro;
 import com.example.addon.modules.DonutSMP.KelpESP;
@@ -28,21 +31,32 @@ public class AddonTemplate extends MeteorAddon {
         LOG.info("Initializing Meteor Addon Template");
 
         // Modules
-        Modules.get().add(new ModuleExample());
+
+        //DonutSMP
         Modules.get().add(new KelpESP());
         Modules.get().add(new ChunkFinder());
         Modules.get().add(new CrystalMacro());
+        Modules.get().add(new ModuleExample());
+
+        //Hypixel
         Modules.get().add(new MiningMacro());
         Modules.get().add(new CoordinatesToChat());
-        Modules.get().add(new DungeonRooms());
+        //Modules.get().add(new DungeonRooms());
         Modules.get().add(new PlayerDetection());
         Modules.get().add(new ChatLogger());
+        Modules.get().add(new GrottoFinder());
 
         // Commands
         Commands.add(new CommandExample());
 
+        //Commands Hypixel
+        Commands.add(new MacroRecordCommand());
+        Commands.add(new GrottoCommand());
+
         // HUD
         Hud.get().register(HudExample.INFO);
+        Hud.get().register(MiningHud.INFO);
+
 
     }
 
